@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MAGNE</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:sans-serif;background:#000;
+  width:100%;height:100%;
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-tap-highlight-color:transparent;
+}
+#app{
+  width:100%;
+  height:100dvh; /* dynamic viewport height — accounts for mobile browser chrome */
+  max-width:480px;
+  margin:0 auto;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+button{cursor:pointer;font-family:inherit;}
+/* ═══════════════════════════════
+   モード選択画面 — 箱デザイン
+   上半分:赤 / 下半分:青
+═══════════════════════════════ */
+#mode-screen{
+  display:flex;flex-direction:column;align-items:center;
+  width:100%;height:100%;
+  padding:0;gap:0;
+  background:linear-gradient(to bottom, #c8181a 50%, #1b3b8a 50%);
+  overflow:hidden;position:relative;
+  flex:1;
+}
+/* ロゴエリア（赤背景上） */
+.ms-logo-area{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:100%;padding:16px 20px 20px;flex:1;
+  position:relative;z-index:2;
+}
+.ms-wagames{
+  font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.8);
+  background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.4);
+  padding:2px 10px;margin-bottom:10px;border-radius:2px;
+}
+/* 緑の丸ロゴ */
+.ms-logo-circle{
+  width:130px;height:130px;border-radius:50%;
+  background:#2d6a2d;border:6px solid #fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 4px 24px rgba(0,0,0,0.35);
+  position:relative;z-index:10;
+}
+.ms-logo-title{
+  font-size:28px;font-weight:700;color:#fff;
+  font-style:italic;letter-spacing:1px;line-height:1.1;
+  text-shadow:1px 2px 4px rgba(0,0,0,0.4);
+}
+.ms-logo-sub{
+  font-size:11px;color:rgba(255,255,255,0.9);letter-spacing:2px;margin-top:2px;
+}
+/* 青背景下エリア */
+.ms-bottom{
+  width:100%;flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:20px 20px max(env(safe-area-inset-bottom,0px),20px);gap:14px;
+  position:relative;z-index:2;
+  overflow-y:auto;
+  justify-content:center;
+}
+.ms-bottom-title{
+  font-size:13px;color:rgba(255,255,255,0.7);letter-spacing:2px;
+  border-bottom:1px solid rgba(255,255,255,0.25);padding-bottom:8px;
+  width:100%;max-width:300px;text-align:center;
+}
+/* モードボタン */
+.ms-mode-grp{display:flex;gap:10px;width:100%;max-width:300px;}
+.ms-mbtn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:12px 8px;cursor:pointer;
+  border:2px solid rgba(255,255,255,0.35);
+  background:rgba(255,255,255,0.08);color:#fff;
+  border-radius:6px;transition:all 0.15s;text-align:center;
+}
+.ms-mbtn:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.7);}
+.ms-mbtn.on{background:rgba(255,255,255,0.22);border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.3);}
+.ms-mbtn-title{font-size:14px;font-weight:700;letter-spacing:1px;}
+.ms-mbtn-sub{font-size:9px;opacity:0.75;letter-spacing:0.5px;}
+/* 難易度 */
+.ms-lvgrp{display:flex;flex-direction:column;gap:6px;width:100%;max-width:300px;}
+.ms-lv-label{font-size:10px;color:rgba(255,255,255,0.65);letter-spacing:1px;}
+.ms-lvrow{display:flex;gap:6px;}
+.ms-lvrow .ms-mbtn{padding:8px 4px;}
+/* 手番 */
+.ms-ordgrp{display:flex;flex-direction:column;gap:6px;width:100%;max-width:300px;}
+.ms-ord-label{font-size:10px;color:rgba(255,255,255,0.65);letter-spacing:1px;}
+.ms-ordrow{display:flex;gap:6px;}
+.ms-ordrow .ms-mbtn{padding:10px 4px;}
+/* STARTボタン */
+#sbtn{
+  padding:13px 52px;font-size:15px;font-weight:700;
+  background:#fff;color:#1b3b8a;border:none;
+  border-radius:30px;letter-spacing:3px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  transition:transform 0.1s,box-shadow 0.1s;
+}
+#sbtn:hover{background:#f0f4ff;transform:scale(1.04);box-shadow:0 6px 22px rgba(0,0,0,0.35);}
+#sbtn:active{transform:scale(0.97);}
+/* 旧クラス（ゲーム画面で使う分）*/
+.slabel{font-size:10px;color:#999;letter-spacing:1px;align-self:flex-start;width:100%;max-width:260px;}
+.mgrp{display:flex;flex-direction:column;gap:6px;width:100%;max-width:260px;}
+.mbtn{display:flex;align-items:center;gap:10px;padding:12px 14px;font-size:13px;border:1px solid #ccc;background:#fff;color:#333;text-align:left;width:100%;}
+.mbtn:hover,.mbtn.on{background:#e8e8e8;border-color:#999;}
+.mtxt{display:flex;flex-direction:column;}
+.mt{font-weight:700;font-size:13px;}.ms-txt{font-size:10px;color:#888;}
+.lvgrp{display:flex;flex-direction:column;gap:6px;width:100%;max-width:260px;}
+.lvrow{display:flex;gap:6px;}
+.lvrow .mbtn{flex:1;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;text-align:center;}
+.ordgrp{display:flex;flex-direction:column;gap:6px;width:100%;max-width:260px;}
+.ordrow{display:flex;gap:6px;}
+.ordrow .mbtn{flex:1;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;text-align:center;}
+/* ═══════════════════════════════
+   ゲーム画面 — メニューと統一デザイン
+   上部ステータス:赤系 / ボード部:青系
+═══════════════════════════════ */
+/* ゲーム画面ヘッダーは削除 */
+.gh-wagames{
+  font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.7);
+  background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);
+  padding:2px 8px;margin-bottom:6px;border-radius:2px;
+}
+.gh-logo{
+  font-size:22px;font-weight:700;font-style:italic;
+  color:#fff;letter-spacing:2px;
+  text-shadow:1px 2px 6px rgba(0,0,0,0.4);
+}
+#game-screen{
+  display:none;
+  background:#c8181a;
+  overflow:hidden;
+  padding:0 0 max(env(safe-area-inset-bottom,0px),8px) 0;
+  flex-direction:column;
+  width:100%;
+  height:100%;
+  flex:1;
+}
+/* ── スコアバー ───────────────── */
+#stat{
+  display:flex;align-items:center;
+  padding:max(env(safe-area-inset-top,0px),8px) 12px 6px;
+  background:rgba(0,0,0,0.22);
+  border-bottom:1px solid rgba(255,255,255,0.15);
+  flex-shrink:0;
+}
+/* 左右スコアブロック */
+.sc-block{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 14px;
+  border-radius:10px;
+  min-width:62px;
+}
+.sc-purple{ background:rgba(123,63,160,0.45); border:1px solid rgba(180,120,255,0.4); }
+.sc-green{  background:rgba(45,106,45,0.45);  border:1px solid rgba(100,220,120,0.4); }
+.sc-label{
+  font-size:9px;font-weight:700;letter-spacing:1.5px;
+  color:rgba(255,255,255,0.7);text-transform:uppercase;
+}
+.sc-num{
+  font-size:28px;font-weight:800;line-height:1;
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 2px 8px rgba(0,0,0,0.5);
+}
+.pc{ color:#d9a8ff; }
+.gc{ color:#7deb9a; }
+/* 中央：ターン＋残り枚数 */
+.sc-center{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+#tdsp{
+  font-size:11px;font-weight:700;color:#fff;
+  letter-spacing:0.8px;text-align:center;
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:20px;padding:3px 12px;
+}
+#crem{font-size:10px;color:rgba(255,255,255,0.55);letter-spacing:0.5px;}
+#canvas-wrap{
+  width:calc(100% - 16px);margin:6px 8px 0;
+  position:relative;
+  background:#1b3b8a;
+  border-radius:12px;overflow:hidden;
+  box-shadow:0 2px 16px rgba(0,0,0,0.35);
+  flex:1;min-height:0;
+  display:flex;align-items:stretch;
+  /* 手札上下＋ボードで縦長なので背景色を手札行に合わせて調整 */
+  background:transparent;
+}
+#canvas-wrap svg{display:block;width:100%;height:100%;}
+/* ゲーム終了オーバーレイ */
+#end-overlay{display:none;position:absolute;inset:0;align-items:center;justify-content:center;z-index:70;pointer-events:none;}
+#end-overlay.show{display:flex;pointer-events:auto;}
+#end-banner{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:22px 40px;border-radius:12px;
+  font-weight:700;color:#fff;text-align:center;
+  border:4px solid rgba(255,255,255,0.85);
+  box-shadow:0 6px 36px rgba(0,0,0,0.5);
+  animation:bannerPop 0.45s cubic-bezier(.18,.89,.32,1.28) forwards;
+}
+@keyframes bannerPop{
+  0%{opacity:0;transform:scale(0.6);}
+  100%{opacity:1;transform:scale(1);}
+}
+#end-banner.win-purple{background:#7b3fa0;}
+#end-banner.win-green{background:#2d6a2d;}
+#end-banner.win-draw{background:#1a5fa8;}
+#end-banner.win-cpu{background:#7b3fa0;}
+#end-game-label{font-size:14px;letter-spacing:2px;opacity:0.85;}
+#end-winner{font-size:26px;letter-spacing:3px;line-height:1.2;}
+#end-score{font-size:13px;opacity:0.85;margin-top:2px;}
+.end-banner-btns{display:flex;gap:10px;margin-top:6px;}
+.end-banner-btns button{
+  padding:8px 22px;font-size:13px;font-weight:600;border-radius:20px;
+  border:2px solid rgba(255,255,255,0.8);background:rgba(255,255,255,0.18);
+  color:#fff;cursor:pointer;letter-spacing:1px;transition:background 0.15s;
+}
+.end-banner-btns button:hover{background:rgba(255,255,255,0.32);}
+
+/* ターンポップ — グレーアウトなし */
+#turn-overlay{display:none;position:absolute;inset:0;align-items:center;justify-content:center;z-index:60;pointer-events:none;}
+#turn-overlay.show{display:flex;pointer-events:auto;}
+#turn-popup{
+  padding:18px 32px;border-radius:12px;font-size:18px;font-weight:700;
+  color:#fff;letter-spacing:1px;cursor:pointer;text-align:center;
+  user-select:none;transition:transform 0.1s;
+  border:3px solid rgba(255,255,255,0.7);
+  box-shadow:0 4px 28px rgba(0,0,0,0.45);
+  backdrop-filter:blur(2px);
+}
+#turn-popup:hover{transform:scale(1.05);}
+#turn-popup:active{transform:scale(0.97);}
+#turn-popup.purple{background:rgba(123,63,160,0.92);}
+#turn-popup.green{background:rgba(45,106,45,0.92);}
+#turn-popup.cpu{background:rgba(26,95,168,0.92);}
+#turn-popup-sub{font-size:11px;font-weight:400;margin-top:6px;opacity:0.85;}
+/* スコアポップ — 3倍サイズ・4秒 */
+.spop{position:absolute;pointer-events:none;z-index:50;animation:spopA 4s ease-out forwards;}
+@keyframes spopA{0%{opacity:0;transform:translate(-50%,-50%) scale(0.4);}12%{opacity:1;transform:translate(-50%,-50%) scale(1.1);}25%{transform:translate(-50%,-50%) scale(1);}75%{opacity:1;transform:translate(-50%,-80%);}100%{opacity:0;transform:translate(-50%,-110%);}}
+
+/* 選択中カードパネル削除済み */
+
+/* メニュー・回転ボタン行 */
+.brow{display:flex;gap:6px;margin:5px 8px 0;flex-shrink:0;}
+.brow button{
+  flex:1;padding:9px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.35);
+  color:#fff;border-radius:20px;
+  letter-spacing:1px;
+  transition:background 0.15s,transform 0.1s,opacity 0.15s;
+}
+.brow button:hover:not(:disabled){background:rgba(255,255,255,0.2);}
+.brow button:active:not(:disabled){transform:scale(0.97);}
+/* 回転ボタン：カード選択時にハイライト */
+#r180btn:not(:disabled){
+  background:rgba(255,200,80,0.22);
+  border-color:rgba(255,200,80,0.7);
+  color:#ffe680;
+}
+#r180btn:hover:not(:disabled){background:rgba(255,200,80,0.35);}
+#r180btn:disabled{opacity:0.35;cursor:default;}
+
+/* 終了エリア（下部小結果表示） */
+#endarea{margin:5px 8px 0;flex-shrink:0;}
+.ebox{
+  padding:16px;
+  background:rgba(255,255,255,0.1);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:8px;
+  text-align:center;color:#fff;
+}
+.ebox h3{font-size:16px;font-weight:700;margin-bottom:4px;letter-spacing:1px;}
+.ebox p{font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:12px;}
+.erow{display:flex;gap:8px;justify-content:center;}
+.erow button{
+  padding:7px 18px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.45);
+  color:#fff;border-radius:18px;
+  letter-spacing:1px;
+  transition:background 0.15s;
+}
+.erow button:hover{background:rgba(255,255,255,0.28);}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="mode-screen">
+  <!-- 上半分：赤背景 + 緑丸ロゴ -->
+  <div class="ms-logo-area">
+    <div class="ms-wagames">WaGames</div>
+    <div class="ms-logo-circle">
+      <div class="ms-logo-title">Magne</div>
+      <div class="ms-logo-sub">- マグネ -</div>
+    </div>
+  </div>
+  <!-- 下半分：青背景 + 設定UI -->
+  <div class="ms-bottom">
+    <div class="ms-bottom-title">対戦モード</div>
+    <!-- モード選択 -->
+    <div class="ms-mode-grp">
+      <button class="ms-mbtn on" id="bpvp">
+        <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="3"/><path d="M1 19c0-3.3 2.7-6 6-6"/><circle cx="15" cy="7" r="3"/><path d="M21 19c0-3.3-2.7-6-6-6"/></svg>
+        <div class="ms-mbtn-title">2人対戦</div>
+        <div class="ms-mbtn-sub">同じ画面で交互に</div>
+      </button>
+      <button class="ms-mbtn" id="bcpu">
+        <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="16" height="12"/><circle cx="8" cy="11" r="1.5"/><circle cx="14" cy="11" r="1.5"/><path d="M7 5V3M15 5V3M7 17v2M15 17v2M3 9H1M3 13H1M21 9h-2M21 13h-2"/></svg>
+        <div class="ms-mbtn-title">CPU対戦</div>
+        <div class="ms-mbtn-sub">コンピューターと</div>
+      </button>
+    </div>
+    <!-- CPU難易度 -->
+    <div class="ms-lvgrp" id="lvgrp" style="display:none;">
+      <div class="ms-lv-label">CPUの難易度</div>
+      <div class="ms-lvrow">
+        <button class="ms-mbtn" id="lv1"><div class="ms-mbtn-title">Lv.1</div><div class="ms-mbtn-sub">ランダム</div></button>
+        <button class="ms-mbtn" id="lv2"><div class="ms-mbtn-title">Lv.2</div><div class="ms-mbtn-sub">やや賢い</div></button>
+        <button class="ms-mbtn" id="lv3"><div class="ms-mbtn-title">Lv.3</div><div class="ms-mbtn-sub">強い</div></button>
+      </div>
+    </div>
+    <!-- 手番 -->
+    <div class="ms-ordgrp">
+      <div class="ms-ord-label">手番</div>
+      <div class="ms-ordrow">
+        <button class="ms-mbtn on" id="ord-first">
+          <div class="ms-mbtn-title">先攻</div>
+          <div class="ms-mbtn-sub">自分（紫）が先</div>
+        </button>
+        <button class="ms-mbtn" id="ord-second">
+          <div class="ms-mbtn-title">後攻</div>
+          <div class="ms-mbtn-sub">相手（緑）が先</div>
+        </button>
+      </div>
+    </div>
+    <button id="sbtn">START</button>
+  </div>
+</div>
+<div id="game-screen">
+  <div id="stat">
+    <div class="sc-block sc-purple">
+      <div class="sc-label">あなた</div>
+      <div class="sc-num pc" id="s0">0</div>
+    </div>
+    <div class="sc-center">
+      <div id="tdsp">-</div>
+      <div id="crem"></div>
+    </div>
+    <div class="sc-block sc-green">
+      <div class="sc-label" id="sc-label1">CPU</div>
+      <div class="sc-num gc" id="s1">0</div>
+    </div>
+  </div>
+  <div id="canvas-wrap">
+    <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="turn-overlay">
+      <div id="turn-popup"><div id="turn-popup-main"></div><div id="turn-popup-sub"></div></div>
+    </div>
+    <div id="end-overlay">
+      <div id="end-banner">
+        <div id="end-game-label">ゲーム終了</div>
+        <div id="end-winner"></div>
+        <div id="end-score"></div>
+        <div class="end-banner-btns">
+          <button id="end-btn-restart">もう一度</button>
+          <button id="end-btn-menu">メニューへ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="brow"><button id="bmenu">← メニュー</button><button id="r180btn" disabled>↻ 180°回転</button></div>
+  <div id="endarea"></div>
+</div>
+</div>
+<script>
+// ═══════════════════════════════════════════
+//   効果音システム (Web Audio API)
+// ═══════════════════════════════════════════
+const SFX = (() => {
+  let ctx = null;
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  // 基本波形を鳴らす汎用関数
+  function playTone(opts) {
+    const ac = getCtx();
+    const { type='sine', freq=440, freq2=null, duration=0.2, volume=0.4,
+            attack=0.01, decay=0.05, sustain=0.7, release=0.1,
+            delay=0 } = opts;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = type;
+    const t = ac.currentTime + delay;
+    osc.frequency.setValueAtTime(freq, t);
+    if (freq2 !== null) osc.frequency.exponentialRampToValueAtTime(freq2, t + duration);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(volume, t + attack);
+    gain.gain.setValueAtTime(volume * sustain, t + attack + decay);
+    gain.gain.linearRampToValueAtTime(0, t + duration + release);
+    osc.start(t);
+    osc.stop(t + duration + release + 0.05);
+  }
+
+  function playNoise(duration=0.1, volume=0.3, delay=0) {
+    const ac = getCtx();
+    const bufLen = ac.sampleRate * (duration + 0.1);
+    const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    const gain = ac.createGain();
+    const filter = ac.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 800;
+    src.connect(filter); filter.connect(gain); gain.connect(ac.destination);
+    const t = ac.currentTime + delay;
+    gain.gain.setValueAtTime(volume, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    src.start(t);
+    src.stop(t + duration + 0.05);
+  }
+
+  return {
+    // カード選択クリック音
+    select() {
+      playTone({ type:'triangle', freq:600, freq2:700, duration:0.08, volume:0.3, attack:0.005, decay:0.02, sustain:0.5, release:0.05 });
+    },
+    // カード設置音（ドスッ）
+    place() {
+      playNoise(0.12, 0.5);
+      playTone({ type:'sine', freq:120, freq2:60, duration:0.15, volume:0.4, attack:0.005, decay:0.05, sustain:0.3, release:0.08 });
+    },
+    // カード移動・引き寄せ音（スライド）
+    move() {
+      playTone({ type:'sine', freq:300, freq2:500, duration:0.25, volume:0.25, attack:0.01, decay:0.1, sustain:0.4, release:0.1 });
+      playNoise(0.1, 0.15, 0.05);
+    },
+    // 弾き飛ばし音（ビュン）
+    eject() {
+      playTone({ type:'sawtooth', freq:500, freq2:100, duration:0.3, volume:0.35, attack:0.005, decay:0.05, sustain:0.5, release:0.15 });
+      playNoise(0.08, 0.25, 0.05);
+    },
+    // スコア獲得（+1点）
+    scoreUp() {
+      playTone({ type:'sine', freq:523, duration:0.1, volume:0.35, attack:0.005, decay:0.03, sustain:0.8, release:0.08 });
+      playTone({ type:'sine', freq:659, duration:0.1, volume:0.35, attack:0.005, decay:0.03, sustain:0.8, release:0.08, delay:0.1 });
+    },
+    // スコアマイナス（-1点）
+    scoreMinus() {
+      playTone({ type:'triangle', freq:300, freq2:200, duration:0.2, volume:0.3, attack:0.005, decay:0.05, sustain:0.5, release:0.12 });
+    },
+    // ターン切り替え通知音
+    turnNotify(isPlayer2) {
+      const base = isPlayer2 ? 392 : 440;
+      playTone({ type:'sine', freq:base, duration:0.12, volume:0.3, attack:0.01, decay:0.03, sustain:0.8, release:0.08 });
+      playTone({ type:'sine', freq:base*1.25, duration:0.12, volume:0.3, attack:0.01, decay:0.03, sustain:0.8, release:0.08, delay:0.13 });
+    },
+    // CPUターン通知
+    cpuTurn() {
+      playTone({ type:'square', freq:220, freq2:280, duration:0.2, volume:0.2, attack:0.01, decay:0.05, sustain:0.5, release:0.1 });
+    },
+    // 勝利ファンファーレ
+    win() {
+      [[523,0],[659,0.15],[784,0.3],[1047,0.5]].forEach(([f,d]) =>
+        playTone({ type:'sine', freq:f, duration:0.25, volume:0.35, attack:0.01, decay:0.05, sustain:0.8, release:0.15, delay:d })
+      );
+    },
+    // 敗北音
+    lose() {
+      [[392,0],[330,0.2],[262,0.45]].forEach(([f,d]) =>
+        playTone({ type:'triangle', freq:f, duration:0.3, volume:0.3, attack:0.01, decay:0.05, sustain:0.7, release:0.2, delay:d })
+      );
+    },
+    // 引き分け音
+    draw() {
+      playTone({ type:'sine', freq:440, duration:0.4, volume:0.25, attack:0.02, decay:0.1, sustain:0.6, release:0.2 });
+    },
+    // メニューボタン
+    button() {
+      playTone({ type:'triangle', freq:440, freq2:480, duration:0.08, volume:0.2, attack:0.005, decay:0.02, sustain:0.6, release:0.05 });
+    },
+    // START
+    start() {
+      [[330,0],[440,0.1],[550,0.2],[660,0.32]].forEach(([f,d]) =>
+        playTone({ type:'sine', freq:f, duration:0.15, volume:0.3, attack:0.01, decay:0.03, sustain:0.8, release:0.1, delay:d })
+      );
+    },
+  };
+})();
+
+const CARDS=[
+  {top:'N',left:'N',right:'N',bottom:'N',name:'N4'},
+  {top:'S',left:'S',right:'S',bottom:'S',name:'S4'},
+  {top:'N',left:'N',right:'N',bottom:'S',name:'N3S1'},
+  {top:'N',left:'N',right:'S',bottom:'N',name:'N3S1b'},
+  {top:'S',left:'S',right:'S',bottom:'N',name:'S3N1'},
+  {top:'S',left:'S',right:'N',bottom:'S',name:'S3N1b'},
+];
+const OPP={top:'bottom',bottom:'top',left:'right',right:'left'};
+const DV={top:[-1,0],bottom:[1,0],left:[0,-1],right:[0,1]};
+const DIRS=['top','left','right','bottom'];
+const NS='http://www.w3.org/2000/svg';
+const PC='#7b3fa0',GC='#2d6a2d',NC='#c0392b',SC='#1a5fa8';
+const HC_GAP=4,CELL_W=64,CELL_H=Math.round(CELL_W*4/3),CELL_GAP=4;
+const BOARD_W=CELL_W*4+CELL_GAP*3,BOARD_H=CELL_H*4+CELL_GAP*3;
+// 手札を横1列に並べる（6枚）
+const HC_W=Math.round(BOARD_W/6)-HC_GAP,HC_H=Math.round(HC_W*4/3);
+const HAND_ROW_H=HC_H+6; // ラベル込み
+const LABEL_H=12;
+// SVG全体: [手札(緑)] + [ボード] + [手札(紫)]
+const PAD=4;
+const BX=PAD,BY=PAD+HAND_ROW_H+4;
+const VW=BOARD_W+PAD*2,VH=PAD+HAND_ROW_H+4+BOARD_H+4+HAND_ROW_H+PAD;
+// 手札の横並び座標 (p=0:紫=下, p=1:緑=上)
+function handXY(p,i){
+  const slotW=BOARD_W/6;
+  const hx=PAD+i*slotW+(slotW-HC_W)/2;
+  const hy=p===1 ? PAD+LABEL_H : PAD+HAND_ROW_H+4+BOARD_H+4+LABEL_H;
+  return[hx,hy];
+}
+function handLabelY(p){return p===1 ? PAD+LABEL_H-2 : PAD+HAND_ROW_H+4+BOARD_H+4+LABEL_H-2;}
+function cellXY(r,c){return[BX+c*(CELL_W+CELL_GAP),BY+r*(CELL_H+CELL_GAP)];}
+function cellCenterSVG(r,c){const[x,y]=cellXY(r,c);return[x+CELL_W/2,y+CELL_H/2];}
+function getSVGScale(){return G('svg').getBoundingClientRect().width/VW;}
+let gmode='pvp',clvl=0,board,hands,scores,turn,sel,rot,over,busy,lastP,cpuT;
+const G=id=>document.getElementById(id);
+const nb=(r,c,d)=>{const[dr,dc]=DV[d];return[r+dr,c+dc];};
+const ib=(r,c)=>r>=0&&r<4&&c>=0&&c<4;
+const cpB=b=>b.map(row=>row.map(x=>x?{...x}:null));
+const mkH=()=>CARDS.map(c=>({def:{...c},used:false}));
+const r180=d=>({top:d.bottom,bottom:d.top,left:d.right,right:d.left,name:d.name});
+function svgEl(tag,attrs={}){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(attrs))e.setAttribute(k,v);return e;}
+function svgTxt(t,attrs={}){const e=svgEl('text',attrs);e.textContent=t;return e;}
+function drawCard(g,x,y,w,h,def,color,glow){
+  if(!def||!def.top)return; // 不正なdefは描画しない
+  const bg=color==='purple'?PC:GC;
+  if(glow)g.appendChild(svgEl('rect',{x:x-3,y:y-3,width:w+6,height:h+6,fill:'none',stroke:'rgba(255,60,60,0.85)','stroke-width':4,rx:4}));
+  g.appendChild(svgEl('rect',{x,y,width:w,height:h,fill:bg,stroke:'white','stroke-width':2,rx:2}));
+  const ps=Math.min(w,h)*0.28,hps=ps/2,pad=ps*0.25;
+  [{p:def.top,cx:x+w/2,cy:y+pad+hps},{p:def.bottom,cx:x+w/2,cy:y+h-pad-hps},{p:def.left,cx:x+pad+hps,cy:y+h/2},{p:def.right,cx:x+w-pad-hps,cy:y+h/2}].forEach(({p,cx,cy})=>{
+    const fill=p==='N'?NC:SC;
+    g.appendChild(svgEl('rect',{x:cx-hps,y:cy-hps,width:ps,height:ps,fill,stroke:'white','stroke-width':1.5}));
+    const fs=Math.max(5,ps*0.55);
+    g.appendChild(svgTxt(p,{x:cx,y:cy+fs*0.38,'font-size':fs,'font-weight':'bold',fill:'white','text-anchor':'middle','font-family':'Georgia,serif'}));
+  });
+}
+function showTurnPopup(playerIdx,isCPUTurn,onClicked){
+  const overlay=G('turn-overlay'),popup=G('turn-popup'),main=G('turn-popup-main'),sub=G('turn-popup-sub');
+  popup.className='';
+  if(isCPUTurn){popup.classList.add('cpu');main.textContent=`CPU Lv${clvl} のターン`;sub.textContent='タップしてCPUに考えさせる';}
+  else if(playerIdx===0){popup.classList.add('purple');main.textContent='紫プレイヤーのターン';sub.textContent='タップしてカードを選ぶ';}
+  else{popup.classList.add('green');main.textContent='緑プレイヤーのターン';sub.textContent='タップしてカードを選ぶ';}
+  overlay.classList.add('show');
+  // ターン通知音
+  if(isCPUTurn) SFX.cpuTurn();
+  else SFX.turnNotify(playerIdx===1);
+  function handler(){overlay.classList.remove('show');popup.removeEventListener('click',handler);SFX.button();onClicked();}
+  popup.addEventListener('click',handler);
+}
+function hideTurnPopup(){G('turn-overlay').classList.remove('show');}
+function showScorePopup(svgR,svgC,plus){
+  try{
+    const scale=getSVGScale();const[sx,sy]=cellCenterSVG(svgR,svgC);
+    const wrap=G('canvas-wrap'),wRect=wrap.getBoundingClientRect(),svgRect=G('svg').getBoundingClientRect();
+    const px=(svgRect.left-wRect.left)+sx*scale,py=(svgRect.top-wRect.top)+sy*scale;
+    const size=168,color=plus?'#1a4fc4':'#cc1111',label=plus?'1点':'－1点';
+    // スコア効果音
+    if(plus) SFX.scoreUp(); else SFX.scoreMinus();
+    const pts=burstPts(size/2,size/2,size/2*0.92,size/2*0.52,12);
+    const popSvg=document.createElementNS(NS,'svg');
+    popSvg.setAttribute('width',size);popSvg.setAttribute('height',size);popSvg.setAttribute('viewBox',`0 0 ${size} ${size}`);
+    const poly=document.createElementNS(NS,'polygon');poly.setAttribute('points',pts);poly.setAttribute('fill',color);popSvg.appendChild(poly);
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x',size/2);t.setAttribute('y',size/2+14);t.setAttribute('font-size','42');t.setAttribute('font-weight','bold');
+    t.setAttribute('fill','white');t.setAttribute('text-anchor','middle');t.setAttribute('font-family','sans-serif');
+    t.textContent=label;popSvg.appendChild(t);
+    const div=document.createElement('div');div.className='spop';div.style.cssText=`left:${px}px;top:${py}px;`;
+    div.appendChild(popSvg);wrap.appendChild(div);
+    setTimeout(()=>{if(div.parentNode)div.remove();},4200);
+  }catch(e){}
+}
+function burstPts(cx,cy,outerR,innerR,count){
+  const pts=[];for(let i=0;i<count*2;i++){const a=Math.PI/count*i-Math.PI/2;const r=i%2===0?outerR:innerR;pts.push(`${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`);}return pts.join(' ');
+}
+function gsB(B,r,c,d){let n=1,cr=r,cc=c;while(true){const[nr,nc]=nb(cr,cc,d);if(!ib(nr,nc)||!B[nr][nc])break;n++;cr=nr;cc=nc;}return n;}
+function fxOf(B,r,c,def){
+  const fx=[];
+  for(const d of DIRS){
+    const[nr,nc]=nb(r,c,d);
+    // はじき: 隣接＆同極
+    if(ib(nr,nc)&&B[nr][nc]&&def[d]===B[nr][nc][OPP[d]])
+      fx.push({type:'rep',tr:nr,tc:nc,dir:d});
+    // 隣接引き寄せ: 隣接＆異極 → 効果あり（磁力でくっつく）
+    if(ib(nr,nc)&&B[nr][nc]&&def[d]!==B[nr][nc][OPP[d]])
+      fx.push({type:'att_adj',tr:nr,tc:nc,dir:d});
+    // 1マス空け引き寄せ: 1マス先に異極カード
+    if(ib(nr,nc)&&!B[nr][nc]){
+      const[fr,fc]=nb(nr,nc,d);
+      if(ib(fr,fc)&&B[fr][fc]&&def[d]!==B[fr][fc][OPP[d]])
+        fx.push({type:'att',tr:fr,tc:fc,mr:nr,mc:nc,dir:d});
+    }
+  }
+  return fx;
+}
+function findDir(fr,fc,tr,tc){return DIRS.find(d=>{const[nr,nc]=nb(fr,fc,d);return nr===tr&&nc===tc;})||'top';}
+function applyB(B,r,c,def,owner,scCb){
+  B[r][c]={...def,owner};const fx=fxOf(B,r,c,def);const mv=[];
+
+  // このターンに「移動先」となったセルを記録し、連鎖で再移動させない
+  // （A→B→Aの無限往復を防ぐ）
+  const movedTo=new Set();
+  // 置いたカード自身の位置も記録（初期配置）
+  movedTo.add(`${r},${c}`);
+
+  // 隣接引き寄せ（att_adj）: 隣接異極 → カードは動かないが置けることを示す効果
+  // applyB内では何も移動しない（すでに接触している）
+  // fx.filter(e=>e.type==='att_adj') → 処理不要（vDefの判定用のみ）
+
+  // 引き寄せ（1マス空け）：塊が大きい場合は置いたカードが引き寄せられる
+  fx.filter(e=>e.type==='att').forEach(e=>{
+    if(!B[e.tr]||!B[e.tr][e.tc])return;
+    if(!B[r][c])return; // 置いたカードが既に移動済みの場合はスキップ
+    const farGs=gsB(B,e.tr,e.tc,e.dir);
+    if(farGs>=2){
+      // 塊→置いたカードが引き寄せられる
+      const placed={...B[r][c]};B[r][c]=null;
+      if(!B[e.mr][e.mc]){
+        B[e.mr][e.mc]={...placed};
+        mv.push({type:'move',fr:r,fc:c,tr:e.mr,tc:e.mc,dirStr:e.dir,card:placed});
+        movedTo.add(`${e.mr},${e.mc}`);
+      } else B[r][c]={...placed};
+    } else {
+      // 単独→遠いカードが引き寄せられる
+      if(movedTo.has(`${e.tr},${e.tc}`)) return;
+      const m={...B[e.tr][e.tc]};
+      mv.push({type:'move',fr:e.tr,fc:e.tc,tr:e.mr,tc:e.mc,dirStr:findDir(e.tr,e.tc,e.mr,e.mc),card:m});
+      B[e.tr][e.tc]=null;B[e.mr][e.mc]={...m};
+      movedTo.add(`${e.mr},${e.mc}`);
+    }
+  });
+
+  // はじき
+  const ejectedEarly = new Set();
+  fx.filter(e=>e.type==='rep').forEach(e=>{
+    if(!B[e.tr]||!B[e.tr][e.tc])return;
+    if(!B[r][c])return; // 置いたカードが既に移動済みの場合はスキップ
+    const ngs=gsB(B,e.tr,e.tc,e.dir);
+    if(ngs>=2){
+      const[pr,pc]=nb(r,c,OPP[e.dir]);const placed={...B[r][c]};B[r][c]=null;
+      if(!ib(pr,pc)||B[pr][pc]){
+        mv.push({type:'ej',fr:r,fc:c,dirStr:OPP[e.dir],card:placed});
+        ejectedEarly.add(`${r},${c}`);
+        scCb(placed,r,c);
+      } else{B[pr][pc]={...placed};mv.push({type:'move',fr:r,fc:c,tr:pr,tc:pc,dirStr:OPP[e.dir],card:placed});movedTo.add(`${pr},${pc}`);}
+    } else {
+      if(movedTo.has(`${e.tr},${e.tc}`)) return;
+      if(ejectedEarly.has(`${e.tr},${e.tc}`)) return; // 既に盤外処理済み
+      const[nr2,nc2]=nb(e.tr,e.tc,e.dir);const m={...B[e.tr][e.tc]};B[e.tr][e.tc]=null;
+      if(!ib(nr2,nc2)){
+        mv.push({type:'ej',fr:e.tr,fc:e.tc,dirStr:e.dir,card:m});
+        ejectedEarly.add(`${e.tr},${e.tc}`);
+        scCb(m,e.tr,e.tc);
+      }
+      else if(!B[nr2][nc2]){B[nr2][nc2]={...m};mv.push({type:'move',fr:e.tr,fc:e.tc,tr:nr2,tc:nc2,dirStr:e.dir,card:m});movedTo.add(`${nr2},${nc2}`);}
+      else B[e.tr][e.tc]={...m};
+    }
+  });
+
+
+  // 連鎖：移動後の新配置で発生する磁力効果を繰り返し処理
+  // ルール:
+  //   - 移動済みカードは「自分から能動的に動く」のはNG
+  //   - 移動済みカードが「静止カードにはじかれる（受動）」のはOK
+  //   - ただし「来た方向に戻る」往復はNG → moveHistory で禁止
+  const ejected = new Set([...ejectedEarly]);
+  const movedCards = new Set([...movedTo]); // 能動的に動けないカードのセル
+  // 往復防止: "fr,fc→tr,tc" の形で記録し、逆方向移動を禁止
+  const moveHistory = new Set(); // "fr,fc→tr,tc"
+
+  // 初期移動をhistoryに登録
+  mv.forEach(m=>{
+    if(m.type==='move') moveHistory.add(`${m.fr},${m.fc}→${m.tr},${m.tc}`);
+  });
+
+  for(let it=0;it<40;it++){
+    let ch=false;
+    const snap=[];for(let rr=0;rr<4;rr++)for(let cc=0;cc<4;cc++)if(B[rr][cc])snap.push([rr,cc]);
+    for(const[rr,cc]of snap){
+      if(!B[rr][cc])continue;
+      const isMoved = movedCards.has(`${rr},${cc}`);
+      const card=B[rr][cc];
+      for(const d of DIRS){
+        const[nr,nc]=nb(rr,cc,d);
+
+        // ── 連鎖はじき ──
+        // 静止カードが隣をはじく（能動）
+        // 移動済みカードが静止カードにはじかれる（受動）もOK
+        // 移動済みカードが能動的にはじくのはNG
+        if(!isMoved &&
+           ib(nr,nc)&&B[nr][nc]&&
+           card[d]===B[nr][nc][OPP[d]]&&
+           gsB(B,nr,nc,d)<2&&
+           !ejected.has(`${nr},${nc}`)){
+          const[fr2,fc2]=nb(nr,nc,d);
+          // 往復チェック: 「fr2,fc2 → nr,nc」という逆移動が履歴にないか
+          const reverseKey=`${fr2},${fc2}→${nr},${nc}`;
+          if(moveHistory.has(reverseKey)) continue; // 元の場所に戻ろうとしている→NG
+
+          const m={...B[nr][nc]};B[nr][nc]=null;
+          if(!ib(fr2,fc2)){
+            mv.push({type:'ej',fr:nr,fc:nc,dirStr:d,card:m});
+            ejected.add(`${nr},${nc}`);
+            scCb(m,nr,nc);
+            ch=true;
+          } else if(!B[fr2][fc2]){
+            B[fr2][fc2]={...m};
+            mv.push({type:'move',fr:nr,fc:nc,tr:fr2,tc:fc2,dirStr:d,card:m});
+            moveHistory.add(`${nr},${nc}→${fr2},${fc2}`);
+            movedCards.add(`${fr2},${fc2}`);
+            ch=true;
+          } else {
+            B[nr][nc]={...m};
+          }
+        }
+
+        // ── 連鎖引き寄せ（1マス空け）──
+        // 静止カード（未移動）のみが能動的に引き寄せる
+        // 引き寄せ対象が移動済みでも引き寄せOK（ただし往復チェックあり）
+        if(!isMoved && ib(nr,nc)&&!B[nr][nc]){
+          const[fr2,fc2]=nb(nr,nc,d);
+          if(ib(fr2,fc2)&&B[fr2][fc2]&&
+             card[d]!==B[fr2][fc2][OPP[d]]&&
+             gsB(B,fr2,fc2,d)<2&&
+             !ejected.has(`${fr2},${fc2}`)){
+            // 往復チェック
+            const reverseKey=`${nr},${nc}→${fr2},${fc2}`;
+            if(moveHistory.has(reverseKey)) continue;
+
+            const m={...B[fr2][fc2]};B[fr2][fc2]=null;B[nr][nc]={...m};
+            mv.push({type:'move',fr:fr2,fc:fc2,tr:nr,tc:nc,dirStr:findDir(fr2,fc2,nr,nc),card:m});
+            moveHistory.add(`${fr2},${fc2}→${nr},${nc}`);
+            movedCards.add(`${nr},${nc}`);
+            ch=true;
+          }
+        }
+      }
+    }
+    if(!ch)break;
+  }
+  return mv;
+}
+function emp(){for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(board[r][c])return false;return true;}
+function vDef(r,c,def){if(board[r][c])return false;if(emp())return true;return fxOf(board,r,c,def).length>0;}
+function vSel(r,c){return rot?vDef(r,c,rot):false;}
+// 大きな赤い塗りつぶし矢印を描画する関数
+// cx,cy: 矢印の中心、ang: 方向(ラジアン)、size: 矢印全長
+function drawBigArrow(g, cx, cy, ang, size){
+  // 矢印の形: 太い軸 + 大きな三角頭
+  const shaftW = size * 0.22;   // 軸の太さ（半幅）
+  const shaftLen = size * 0.45; // 軸の長さ
+  const headW = size * 0.44;    // 頭の幅（半幅）
+  const headLen = size * 0.55;  // 頭の長さ
+  const totalLen = shaftLen + headLen;
+  // 矢印を (0,0) 中心・右向きで定義してからangで回転
+  // 軸: (-totalLen/2, -shaftW) → (totalLen/2-headLen, shaftW)
+  // 頭: 三角形
+  const sx = -totalLen/2;
+  const hx = sx + shaftLen; // 軸と頭の境界X
+  const ex = sx + totalLen; // 矢印先端X
+
+  const pts = [
+    [sx,      -shaftW],
+    [hx,      -shaftW],
+    [hx,      -headW],
+    [ex,       0],
+    [hx,       headW],
+    [hx,       shaftW],
+    [sx,       shaftW],
+  ];
+
+  // angで回転
+  const cos = Math.cos(ang), sin = Math.sin(ang);
+  const rotated = pts.map(([x,y]) => [
+    cx + x*cos - y*sin,
+    cy + x*sin + y*cos,
+  ]);
+  const pointsStr = rotated.map(([x,y])=>`${x},${y}`).join(' ');
+
+  const arrow = svgEl('polygon',{
+    points: pointsStr,
+    fill: 'rgba(220,30,30,0.95)',
+    stroke: 'white',
+    'stroke-width': '2',
+    'stroke-linejoin': 'round',
+  });
+  g.appendChild(arrow);
+}
+
+// moves を1件ずつ「矢印1秒 → 移動1秒」で順番に処理する
+// 各ステップで独立してカードを描画・アニメーション→次ステップへ
+function animateMoves(moves, onDone){
+  if(!moves.length){onDone();return;}
+  const ARROW_SHOW = 1000;
+  const MOVE_DURATION = 1000;
+  const ARR_SIZE = Math.min(CELL_W, CELL_H) * 0.7;
+  const svg = G('svg');
+
+  // ── 全セルを非表示にしてボードをクリーン描画 ──
+  const allHidden = new Set();
+  moves.forEach(m=>{
+    allHidden.add(`${m.fr},${m.fc}`);
+    if(m.type==='move') allHidden.add(`${m.tr},${m.tc}`);
+  });
+  const savedBoard = {};
+  allHidden.forEach(k=>{
+    const[r,c]=k.split(',').map(Number);
+    savedBoard[k]=board[r][c]; board[r][c]=null;
+  });
+  renderStatic(svg);
+
+  const ag = svgEl('g',{id:'anim-group'});
+  svg.appendChild(ag);
+
+  // 各ステップで「そのカードが今いる位置」を追跡するマップ
+  // キー: "fr,fc"（最初の登場位置）, 値: 現在の[svgX, svgY]
+  // 同一カードが連鎖で A→B→C と動く場合:
+  //   step0: fr=A で登録、A→Bへ移動後に curPos[A]=[Bのxy]に更新
+  //   step1: fr=B は allHidden にあるので「前のstepで動いたカード」→ curPosで現在地を引く
+  const curPos = new Map(); // "fr,fc" → {x, y, cardG(現在表示中)}
+
+  // step実行
+  function runStep(idx){
+    if(idx >= moves.length){
+      // 全完了: ボードを復元してrender
+      allHidden.forEach(k=>{const[r,c]=k.split(',').map(Number);board[r][c]=savedBoard[k];});
+      ag.remove();
+      render();
+      onDone();
+      return;
+    }
+
+    const m = moves[idx];
+
+    // --- このステップのカードの「現在SVG位置」を決定 ---
+    // 連鎖で前のstepが同じカードを動かした場合、curPosに現在地がある
+    // そうでなければ fr,fc のセル座標が出発地
+    let fromX, fromY, existingCardG = null;
+
+    // 「前のstepで到達したtr,tc」が今回のfr,fcと一致するケースを検出
+    // → curPosに登録されたキーの中から今回のfr,fcに一致するものを探す
+    const posKey = `${m.fr},${m.fc}`;
+    if(curPos.has(posKey)){
+      const cp = curPos.get(posKey);
+      fromX = cp.x; fromY = cp.y;
+      existingCardG = cp.cardG;
+    } else {
+      const[fx,fy] = cellXY(m.fr, m.fc);
+      fromX = fx; fromY = fy;
+    }
+
+    // 移動先SVG座標
+    let toX, toY;
+    if(m.type==='move'){
+      const[ttx,tty]=cellXY(m.tr,m.tc); toX=ttx; toY=tty;
+    } else {
+      const[dr,dc]=DV[m.dirStr]||[0,0];
+      toX=fromX+dc*(CELL_W+CELL_GAP)*2.5;
+      toY=fromY+dr*(CELL_H+CELL_GAP)*2.5;
+    }
+
+    const dx=toX-fromX, dy=toY-fromY;
+    const len=Math.sqrt(dx*dx+dy*dy);
+    const ang=Math.atan2(dy,dx);
+
+    // カードDOMを用意（前stepから引き継ぐか、新規作成）
+    let cardG = existingCardG;
+    if(!cardG){
+      cardG = svgEl('g');
+      const color = m.card.owner===0?'purple':'green';
+      drawCard(cardG, fromX+2, fromY+2, CELL_W-4, CELL_H-4, m.card, color, false);
+      ag.appendChild(cardG);
+    }
+
+    // ── フェーズA: 矢印1秒表示 ──
+    const arrowG = svgEl('g');
+    ag.appendChild(arrowG);
+    if(len > 1){
+      drawBigArrow(arrowG, fromX+CELL_W/2, fromY+CELL_H/2, ang, ARR_SIZE);
+    }
+
+    setTimeout(()=>{
+      arrowG.remove();
+
+      if(len <= 1){
+        // 移動なし → 次のステップへ
+        if(m.type==='move'){
+          // curPosを移動先で更新（次のstepで使えるよう）
+          curPos.delete(posKey);
+          curPos.set(`${m.tr},${m.tc}`, {x:toX, y:toY, cardG});
+        }
+        runStep(idx+1);
+        return;
+      }
+
+      // 移動音
+      if(m.type==='ej') SFX.eject(); else SFX.move();
+
+      // ── フェーズB: 移動アニメ ──
+      // cardG は fromX,fromY に描画されているので
+      // translate(0,0)→translate(dx,dy) でアニメーション
+      const start = performance.now();
+      function step(now){
+        const t = Math.min((now-start)/MOVE_DURATION, 1);
+        const ease = t<0.5 ? 2*t*t : (4-2*t)*t-1;
+        const ox = dx*ease;
+        const oy = dy*ease;
+        cardG.setAttribute('transform',`translate(${ox},${oy})`);
+        if(m.type==='ej') cardG.setAttribute('opacity', String(1-ease*ease));
+
+        if(t<1){
+          requestAnimationFrame(step);
+        } else {
+          if(m.type==='ej'){
+            cardG.setAttribute('opacity','0');
+            curPos.delete(posKey);
+          } else {
+            // 移動完了: 新しい絶対位置でcardGを再描画してtransformリセット
+            // （次のstepで fromX,fromY として使えるよう）
+            while(cardG.firstChild)cardG.removeChild(cardG.firstChild);
+            const color = m.card.owner===0?'purple':'green';
+            drawCard(cardG, toX+2, toY+2, CELL_W-4, CELL_H-4, m.card, color, false);
+            cardG.removeAttribute('transform');
+            // curPosを移動先で更新
+            curPos.delete(posKey);
+            curPos.set(`${m.tr},${m.tc}`, {x:toX, y:toY, cardG});
+          }
+          runStep(idx+1);
+        }
+      }
+      requestAnimationFrame(step);
+    }, ARROW_SHOW);
+  }
+
+  runStep(0);
+}
+function renderStatic(svg){
+  let old=G('board-g');if(old)old.remove();
+  const bg=svgEl('g',{id:'board-g'});const ag=G('anim-group');
+  if(ag)svg.insertBefore(bg,ag);else svg.appendChild(bg);_drawBoard(bg);
+}
+function _drawBoard(g){
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    const[x,y]=cellXY(r,c),w=CELL_W,h=CELL_H;
+    const canPlace=sel!==null&&!over&&!busy&&!board[r][c]&&vSel(r,c),isOcc=!!board[r][c];
+    let fill='#8899dd';if(sel!==null&&!over&&!busy&&!isOcc&&!canPlace)fill='#3a4aaa';if(canPlace)fill='#aabbee';
+    const rect=svgEl('rect',{x,y,width:w,height:h,fill,stroke:'rgba(255,255,255,0.28)','stroke-width':1.5,rx:3});
+    if(canPlace){rect.style.cursor='pointer';rect.addEventListener('click',((rr,cc)=>()=>place(rr,cc))(r,c));}
+    g.appendChild(rect);
+    if(isOcc){const cg=svgEl('g');drawCard(cg,x+2,y+2,w-4,h-4,board[r][c],board[r][c].owner===0?'purple':'green',!!(lastP&&lastP.r===r&&lastP.c===c));g.appendChild(cg);}
+    if(canPlace){const ov=svgEl('rect',{x,y,width:w,height:h,fill:'transparent',stroke:'none',rx:3});ov.style.cursor='pointer';ov.addEventListener('click',((rr,cc)=>()=>place(rr,cc))(r,c));g.appendChild(ov);}
+  }
+}
+function render(){
+  G('s0').textContent=scores[0];G('s1').textContent=scores[1];
+  const isCPU=gmode==='cpu';
+  G('sc-label1').textContent=isCPU?`CPU Lv${clvl}`:'あいて';
+  G('tdsp').textContent=over?'GAME OVER':turn===0?'紫のターン':isCPU?`CPU Lv${clvl}のターン`:'緑のターン';
+  G('crem').textContent=`残り　紫 ${hands[0].filter(h=>!h.used).length}枚 / 緑 ${hands[1].filter(h=>!h.used).length}枚`;
+  const svg=G('svg');svg.setAttribute('viewBox',`0 0 ${VW} ${VH}`);svg.setAttribute('preserveAspectRatio','xMidYMid meet');while(svg.firstChild)svg.removeChild(svg.firstChild);
+  // 背景: 上手札エリア(緑系)・ボード(青)・下手札エリア(紫系)
+  const bgG=svgEl('g');
+  // ボード背景
+  bgG.appendChild(svgEl('rect',{x:0,y:PAD+HAND_ROW_H+4,width:VW,height:BOARD_H+8,fill:'#1b3b8a'}));
+  // 上手札(緑)背景
+  bgG.appendChild(svgEl('rect',{x:0,y:0,width:VW,height:PAD+HAND_ROW_H+4,fill:'#1a3a1a'}));
+  // 下手札(紫)背景
+  bgG.appendChild(svgEl('rect',{x:0,y:PAD+HAND_ROW_H+4+BOARD_H+4,width:VW,height:HAND_ROW_H+PAD,fill:'#2a1540'}));
+  svg.appendChild(bgG);
+  const boardG=svgEl('g',{id:'board-g'});svg.appendChild(boardG);_drawBoard(boardG);
+  [0,1].forEach(p=>{
+    const isCPUH=isCPU&&p===1,color=p===0?'purple':'green';
+    // ラベル（左端）
+    const ly=handLabelY(p);
+    svg.appendChild(svgTxt(p===0?'あなた(紫)':isCPU?`CPU Lv${clvl}`:'P2(緑)',{x:PAD+2,y:ly,'font-size':8,'font-weight':'bold',fill:'rgba(255,255,255,0.7)','text-anchor':'start','font-family':'sans-serif'}));
+    hands[p].forEach((h,i)=>{
+      const[hx,hy]=handXY(p,i);
+      if(h.used){svg.appendChild(svgEl('rect',{x:hx,y:hy,width:HC_W,height:HC_H,fill:'none',stroke:'#bbb','stroke-width':1,'stroke-dasharray':'3 2',rx:2,opacity:0.35}));return;}
+      const disp=(p===turn&&sel===i&&rot)?rot:h.def;
+      const g=svgEl('g');drawCard(g,hx,hy,HC_W,HC_H,disp,color,false);
+      if(p===turn&&!over&&!busy&&!isCPUH){
+        if(sel===i)g.insertBefore(svgEl('rect',{x:hx-3,y:hy-3,width:HC_W+6,height:HC_H+6,fill:'none',stroke:'#e24b4a','stroke-width':3,rx:3}),g.firstChild);
+        const ov=svgEl('rect',{x:hx,y:hy,width:HC_W,height:HC_H,fill:'transparent',stroke:'none',rx:2});
+        ov.style.cursor='pointer';ov.addEventListener('click',((ii)=>()=>selCard(p,ii))(i));g.appendChild(ov);
+      }else if(!(isCPUH&&p===turn))g.setAttribute('opacity','0.55');
+      svg.appendChild(g);
+    });
+  });
+}
+function startTurn(){
+  const isCPU=gmode==='cpu',isCPUTurn=isCPU&&turn===1;
+  render();
+  showTurnPopup(turn,isCPUTurn,()=>{
+    if(isCPUTurn){lg(`CPU(Lv${clvl})が考えています...`);schedCPUAction();}
+    else{const name=turn===0?'あなた(紫)':'P2(緑)';lg(name+'のターン。手札のカードをクリックして選んでください。残り'+hands[turn].filter(h=>!h.used).length+'枚。');}
+  });
+}
+function place(r,c){
+  if(over||!rot||busy)return;if(!vSel(r,c)){lg('そこには置けません');return;}
+  SFX.place();
+  busy=true;const def={...rot};hands[turn][sel].used=true;sel=null;rot=null;G('r180btn').disabled=true;lastP={r,c};
+  const evts=[];
+  const mvs=applyB(board,r,c,def,turn,(card,fr,fc)=>{
+    if(card.owner===turn){
+      // 自分のカードが盤外 → 自分-1点
+      scores[turn]--;
+      evts.push({r:fr,c:fc,plus:false});
+    } else {
+      // 相手のカードが盤外 → 自分+1点
+      scores[turn]++;
+      evts.push({r:fr,c:fc,plus:true});
+    }
+  });
+  evts.forEach(e=>showScorePopup(e.r,e.c,e.plus));
+  G('s0').textContent=scores[0];G('s1').textContent=scores[1];
+  animateMoves(mvs,()=>{
+    busy=false;
+    render(); // 置いたカードを盤面に表示してから待機
+    if(hands[0].every(h=>h.used)&&hands[1].every(h=>h.used)){over=true;endGame();return;}
+    turn=1-turn;
+    setTimeout(()=>startTurn(), 2000);
+  });
+}
+function selCard(p,i){
+  if(p!==turn||hands[p][i].used||busy||over)return;if(gmode==='cpu'&&p===1)return;
+  if(sel===i){sel=null;rot=null;G('r180btn').disabled=true;render();SFX.button();return;}
+  SFX.select();
+  sel=i;rot={...hands[p][i].def};G('r180btn').disabled=false;render();
+}
+function simSc(r,c,def,pl){const B=cpB(board);let d=0;applyB(B,r,c,def,pl,card=>{if(card.owner===pl)d--;else d++;});return d;}
+function cpuPick(){
+  const pl=1,all=[];
+  hands[pl].forEach(h=>{if(h.used)return;[h.def,r180(h.def)].forEach(def=>{for(let r=0;r<4;r++)for(let c=0;c<4;c++)if(vDef(r,c,def))all.push({def:{...def},r,c,score:0});});});
+  if(!all.length)return null;if(clvl===1)return all[Math.floor(Math.random()*all.length)];
+  all.forEach(m=>{m.score=simSc(m.r,m.c,m.def,1);});
+  if(clvl===2){if(Math.random()<0.3)return all[Math.floor(Math.random()*all.length)];const mx=Math.max(...all.map(m=>m.score));const b=all.filter(m=>m.score===mx);return b[Math.floor(Math.random()*b.length)];}
+  all.forEach(m=>{
+    const B1=cpB(board);applyB(B1,m.r,m.c,m.def,1,()=>{});let ob=0;
+    hands[0].forEach(h=>{if(h.used)return;[h.def,r180(h.def)].forEach(def=>{for(let r=0;r<4;r++)for(let c=0;c<4;c++){if(!B1[r][c]&&(B1.every(rw=>rw.every(x=>!x))||fxOf(B1,r,c,def).length>0)){const B2=cpB(B1);let dd=0;applyB(B2,r,c,def,0,card=>{if(card.owner===0)dd--;else dd++;});if(dd>ob)ob=dd;}}});});
+    m.score=m.score*2-ob;
+  });
+  const mx=Math.max(...all.map(m=>m.score));const b=all.filter(m=>m.score>=mx-0.5);return b[Math.floor(Math.random()*b.length)];
+}
+function schedCPUAction(){
+  const dl=clvl===1?600:clvl===2?950:1300;
+  cpuT=setTimeout(()=>{
+    cpuT=null;if(over||turn!==1)return;const mv=cpuPick();if(!mv){over=true;render();endGame();return;}
+    const idx=hands[1].findIndex(h=>!h.used&&h.def.name===mv.def.name);if(idx>=0)hands[1][idx].used=true;
+    lastP={r:mv.r,c:mv.c};busy=true;
+    const evts=[];
+    const mvs=applyB(board,mv.r,mv.c,mv.def,1,(card,fr,fc)=>{
+      if(card.owner===1){
+        // CPUの自分カードが盤外 → CPU-1点
+        scores[1]--;
+        evts.push({r:fr,c:fc,plus:false});
+      } else {
+        // 相手（紫）カードが盤外 → CPU+1点
+        scores[1]++;
+        evts.push({r:fr,c:fc,plus:true});
+      }
+    });
+    evts.forEach(e=>showScorePopup(e.r,e.c,e.plus));G('s0').textContent=scores[0];G('s1').textContent=scores[1];
+    animateMoves(mvs,()=>{
+      busy=false;
+      render(); // 置いたカードを盤面に表示してから待機
+      if(hands[0].every(h=>h.used)&&hands[1].every(h=>h.used)){over=true;endGame();return;}
+      turn=0;setTimeout(()=>startTurn(), 2000);
+    });
+  },dl);
+}
+function stopCPU(){if(cpuT){clearTimeout(cpuT);cpuT=null;}}
+function endGame(){
+  hideTurnPopup();
+  const isCPU=gmode==='cpu';
+  // 勝者テキストとCSSクラスを決定
+  let winnerText, bannerClass;
+  if(scores[0]>scores[1]){
+    winnerText = isCPU ? 'あなたの勝利！' : '紫プレイヤーの勝利！';
+    bannerClass = 'win-purple';
+    setTimeout(()=>isCPU?SFX.win():SFX.win(), 300);
+  } else if(scores[1]>scores[0]){
+    winnerText = isCPU ? `CPU Lv${clvl} の勝利！` : '緑プレイヤーの勝利！';
+    bannerClass = isCPU ? 'win-cpu' : 'win-green';
+    setTimeout(()=>isCPU?SFX.lose():SFX.win(), 300);
+  } else {
+    winnerText = '引き分け';
+    bannerClass = 'win-draw';
+    setTimeout(()=>SFX.draw(), 300);
+  }
+
+  // バナーを設定して表示
+  const banner = G('end-banner');
+  banner.className = bannerClass;
+  G('end-winner').textContent = winnerText;
+  G('end-score').textContent = `紫 ${scores[0]}点 ／ 緑 ${scores[1]}点`;
+  G('end-overlay').classList.add('show');
+
+  // ボタンイベント
+  G('end-btn-restart').onclick = ()=>{ G('end-overlay').classList.remove('show'); initGame(); };
+  G('end-btn-menu').onclick = ()=>{
+    G('end-overlay').classList.remove('show');
+    stopCPU();
+    G('game-screen').style.display='none';
+    G('mode-screen').style.display='flex';
+  };
+
+  // 下部のendareaも更新（スクロール下に小さく結果を残す）
+  G('endarea').innerHTML=`<div class="ebox"><h3>${winnerText}</h3><p>紫 ${scores[0]}点 ／ 緑 ${scores[1]}点</p><div class="erow"><button id="er">もう一度</button><button id="em">メニューへ</button></div></div>`;
+  G('er').onclick=()=>{ G('end-overlay').classList.remove('show'); initGame(); };
+  G('em').onclick=()=>{ G('end-overlay').classList.remove('show'); stopCPU(); G('game-screen').style.display='none'; G('mode-screen').style.display='flex'; };
+}
+function lg(t){/* logbox removed */}
+function initGame(){
+  stopCPU();hideTurnPopup();
+  G('end-overlay').classList.remove('show');
+  board=Array.from({length:4},()=>Array(4).fill(null));
+  hands=[mkH(),mkH()];scores=[0,0];turn=goFirst?0:1;sel=null;rot=null;over=false;busy=false;lastP=null;
+  document.querySelectorAll('.spop').forEach(e=>e.remove());
+  G('endarea').innerHTML='';G('r180btn').disabled=true;
+  render();startTurn();
+}
+function setMode(m){
+  gmode=m;
+  G('bpvp').classList.toggle('on',m==='pvp');
+  G('bcpu').classList.toggle('on',m==='cpu');
+  G('lvgrp').style.display=m==='cpu'?'flex':'none';
+  if(m==='cpu'&&clvl===0)setLvl(1);
+}
+function setLvl(l){clvl=l;[1,2,3].forEach(i=>G('lv'+i).classList.toggle('on',i===l));}
+let goFirst=true;
+function setOrder(first){
+  goFirst=first;
+  G('ord-first').classList.toggle('on',first);
+  G('ord-second').classList.toggle('on',!first);
+}
+G('ord-first').onclick=()=>{SFX.button();setOrder(true);};
+G('ord-second').onclick=()=>{SFX.button();setOrder(false);};
+G('bpvp').onclick=()=>{SFX.button();setMode('pvp');};G('bcpu').onclick=()=>{SFX.button();setMode('cpu');};
+[1,2,3].forEach(i=>G('lv'+i).onclick=()=>{SFX.button();setLvl(i);});
+G('sbtn').onclick=()=>{
+  SFX.start();
+  G('mode-screen').style.display='none';
+  G('game-screen').style.display='flex';
+  // ブラウザがレイアウトを確定してからゲーム初期化・ポップ表示する
+  requestAnimationFrame(()=>requestAnimationFrame(()=>initGame()));
+};
+G('bmenu').onclick=()=>{SFX.button();stopCPU();hideTurnPopup();G('game-screen').style.display='none';G('mode-screen').style.display='flex';};
+G('r180btn').onclick=()=>{if(!rot)return;rot=r180(rot);SFX.select();render();};
+setMode('pvp');
+</script>
+</body>
+</html>
